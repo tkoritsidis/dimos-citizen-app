@@ -5,67 +5,148 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Αναφορά Προβλήματος Δήμου</title>
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-        button { background-color: #0078d4; color: white; padding: 12px; border: none; width: 100%; border-radius: 5px; font-size: 16px; margin-top: 10px; }
-        input[type="file"] { margin-top: 10px; }
-        #status { margin-top: 15px; font-weight: bold; }
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 500px;
+            margin: auto;
+            background-color: #f4f4f9;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 { color: #0078d4; margin-top: 0; }
+        label { font-weight: bold; display: block; margin-top: 15px; }
+        input[type="file"] { margin-top: 8px; width: 100%; }
+        button {
+            background-color: #0078d4;
+            color: white;
+            padding: 12px;
+            border: none;
+            width: 100%;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #005a9e; }
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 4px;
+            word-break: break-word;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #cce5ff; color: #004085; }
     </style>
 </head>
 <body>
 
-    <h2>📢 Αναφορά Προβλήματος Δήμου</h2>
-    <p>Βγάλτε φωτογραφία το πρόβλημα (π.χ. μπάζα, εγκαταλελειμμένο όχημα).</p>
+    <div class="card">
+        <h2>📢 Αναφορά Προβλήματος Δήμου</h2>
+        <p>Βγάλτε φωτογραφία το πρόβλημα (π.χ. μπάζα, εγκαταλελειμμένο όχημα) και στείλτε το αυτόματα στις υπηρεσίες του Δήμου.</p>
 
-    <input type="file" id="photoInput" accept="image/*" capture="environment"><br>
-    <button onclick="uploadReport()">Αποστολή Αναφοράς</button>
+        <label for="photoInput">1. Επιλέξτε ή βγάλτε Φωτογραφία:</label>
+        <input type="file" id="photoInput" accept="image/*" capture="environment">
 
-    <div id="status"></div>
+        <button onclick="uploadReport()">2. Αποστολή Αναφοράς</button>
+
+        <div id="status"></div>
+    </div>
 
     <script>
+        // =========================================================================
+        // ⚙️ ΡΥΘΜΙΣΕΙΣ AZURE STORAGE (ΑΝΤΙΚΑΤΑΣΤΗΣΤΕ ΜΕ ΤΑ ΔΙΚΑ ΣΑΣ ΣΤΟΙΧΕΙΑ)
+        // =========================================================================
+        const STORAGE_ACCOUNT_NAME = "stdimosreports"; // Το ακριβές όνομα του Storage Account
+        const CONTAINER_NAME = "photos";               // Το ακριβές όνομα του Container
+        
+        // Επικολλήστε εδώ το SAS Token που δημιουργήσατε από το Azure Portal (πρέπει να ξεκινάει με '?')
+        // Αν δεν έχετε SAS Token, αφήστε το ως "" (απαιτεί "Allow Blob anonymous access" = Enabled)
+        const SAS_TOKEN = ""; 
+        // =========================================================================
+
         async function uploadReport() {
             const fileInput = document.getElementById('photoInput');
-            const status = document.getElementById('status');
+            const statusDiv = document.getElementById('status');
 
+            // 1. Έλεγχος αν επιλέχθηκε αρχείο
             if (fileInput.files.length === 0) {
-                status.innerText = "Παρακαλώ επιλέξτε ή βγάλτε μια φωτογραφία.";
+                showStatus("Παρακαλώ επιλέξτε ή βγάλτε μια φωτογραφία πρώτα.", "error");
                 return;
             }
 
-            status.innerText = "Λήψη τοποθεσίας GPS...";
+            showStatus("📍 Λήψη τοποθεσίας GPS...", "info");
+
+            // 2. Λήψη συντεταγμένων GPS από τη συσκευή
+            if (!navigator.geolocation) {
+                showStatus("Το πρόγραμμα περιήγησης δεν υποστηρίζει GPS.", "error");
+                return;
+            }
 
             navigator.geolocation.getCurrentPosition(async (position) => {
                 const lat = position.coords.latitude;
                 const lon = position.coords.longitude;
 
-                status.innerText = "Ανέβασμα φωτογραφίας...";
+                showStatus("📤 Ανέβασμα φωτογραφίας στο Azure...", "info");
 
                 const file = fileInput.files[0];
-                const fileName = `report_${Date.now()}_lat${lat}_lon${lon}.jpg`;
+                const timestamp = Date.now();
                 
-                // Αντικαταστήστε με το δικό σας SAS URL ή Blob Endpoint
-                const blobUrl = `https://stdimosreports.blob.core.windows.net/photos`;
+                // Δημιουργία μοναδικού ονόματος αρχείου με ενσωματωμένα τα lat/lon
+                const fileName = `report_${timestamp}_lat${lat}_lon${lon}.jpg`;
+                
+                // Σύνθεση του πλήρους URL για το PUT request
+                let blobUrl = `https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${CONTAINER_NAME}/${fileName}`;
+                if (SAS_TOKEN.trim() !== "") {
+                    // Προσθήκη του SAS Token αν υπάρχει
+                    blobUrl += SAS_TOKEN.startsWith('?') ? SAS_TOKEN : `?${SAS_TOKEN}`;
+                }
 
                 try {
+                    // 3. Αποστολή του αρχείου με HTTP PUT
                     const response = await fetch(blobUrl, {
                         method: 'PUT',
                         headers: {
                             'x-ms-blob-type': 'BlockBlob',
-                            'Content-Type': file.type
+                            'Content-Type': file.type || 'image/jpeg'
                         },
                         body: file
                     });
 
-                    if (response.ok) {
-                        status.innerHTML = `<span style="color:green;">Η αναφορά στάλθηκε επιτυχώς!<br>GPS: ${lat}, ${lon}</span>`;
+                    if (response.ok || response.status === 201) {
+                        const mapUrl = `https://maps.google.com/?q=${lat},${lon}`;
+                        showStatus(
+                            `✅ <strong>Η αναφορά στάλθηκε επιτυχώς!</strong><br><br>` +
+                            `📍 <strong>GPS:</strong> ${lat.toFixed(5)}, ${lon.toFixed(5)}<br>` +
+                            `🗺️ <a href="${mapUrl}" target="_blank">Προβολή στο Google Maps</a>`, 
+                            "success"
+                        );
+                        fileInput.value = ""; // Καθαρισμός του input
                     } else {
-                        status.innerText = "Σφάλμα κατά την αποστολή.";
+                        showStatus(`❌ Σφάλμα Azure (${response.status}): ${response.statusText}`, "error");
                     }
                 } catch (err) {
-                    status.innerText = "Σφάλμα δικτύου.";
+                    console.error("Upload error:", err);
+                    showStatus("❌ Σφάλμα δικτύου ή CORS. Ελέγξτε τις ρυθμίσεις CORS στο Storage Account.", "error");
                 }
             }, (error) => {
-                status.innerText = "Απαραίτητη η πρόσβαση στο GPS για την αποστολή.";
+                showStatus("❌ Απαραίτητη η πρόσβαση στο GPS για τον εντοπισμό του προβλήματος.", "error");
+            }, {
+                enableHighAccuracy: true,
+                timeout: 10000
             });
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = message;
+            statusDiv.className = type;
         }
     </script>
 </body>
