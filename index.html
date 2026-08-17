@@ -25,9 +25,11 @@
     </div>
 
     <script>
-        const STORAGE_ACCOUNT_NAME = "stdimosreports";
-        const CONTAINER_NAME = "photos";
-        const SAS_TOKEN = "sv=2025-07-05&ss=b&srt=sco&se=2027-08-17T20%3A51%3A36Z&sp=rwdl&sig=3a1Dk4YgUWG4QA2mKfcARf0J%2BeCkDl5JI8PvYlZ1oZc%3D"; // π.χ. "?sv=2022-11-02&ss=b..."
+        // ------------------------------------------------------------------
+        const STORAGE_ACCOUNT_NAME = "stdimosreports"; 
+        const CONTAINER_NAME = "photos";               
+        const SAS_TOKEN = "sv=2025-07-05&ss=b&srt=sco&se=2027-08-17T21%3A03%3A51Z&sp=rwdl&sig=rfdyGxGirNsPYFTHrx4AghhJYevlQIi%2B%2FLiyqssNhWY%3D"; // Το token από το Βήμα 1 (με το ?)
+        // ------------------------------------------------------------------
 
         async function uploadReport() {
             const fileInput = document.getElementById('photoInput');
