@@ -43,7 +43,7 @@
                 const fileName = `report_${Date.now()}_lat${lat}_lon${lon}.jpg`;
                 
                 // Αντικαταστήστε με το δικό σας SAS URL ή Blob Endpoint
-                const blobUrl = `https://stdimosreports.blob.core.windows.net/photos/${fileName}`;
+                const blobUrl = `https://stdimosreports.blob.core.windows.net/photos`;
 
                 try {
                     const response = await fetch(blobUrl, {
