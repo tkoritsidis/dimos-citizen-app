@@ -1,4 +1,3 @@
-$htmlContent = @"
 <!DOCTYPE html>
 <html lang="el">
 <head>
@@ -28,7 +27,7 @@ $htmlContent = @"
     <script>
         const STORAGE_ACCOUNT_NAME = "stdimosreports";
         const CONTAINER_NAME = "photos";
-        const SAS_TOKEN = "sv=2025-07-05&ss=b&srt=sco&se=2027-08-17T19%3A33%3A49Z&sp=rwdl&sig=5h0kCnCy%2FNKB0hKMPLYHiOINPyhM%2F7kn45HrKzbIwSg%3D"; // Επικολλήστε το SAS Token εδώ
+        const SAS_TOKEN = "sv=2025-07-05&ss=b&srt=sco&se=2027-08-17T20%3A51%3A36Z&sp=rwdl&sig=3a1Dk4YgUWG4QA2mKfcARf0J%2BeCkDl5JI8PvYlZ1oZc%3D"; // π.χ. "?sv=2022-11-02&ss=b..."
 
         async function uploadReport() {
             const fileInput = document.getElementById('photoInput');
@@ -47,8 +46,8 @@ $htmlContent = @"
                 const file = fileInput.files[0];
                 const fileName = `report_${Date.now()}_lat${lat}_lon${lon}.jpg`;
                 
-                const cleanSas = SAS_TOKEN.startsWith('?') ? SAS_TOKEN : `?` + SAS_TOKEN;
-                const blobUrl = `https://` + STORAGE_ACCOUNT_NAME + `.blob.core.windows.net/` + CONTAINER_NAME + `/` + fileName + cleanSas;
+                const cleanSas = SAS_TOKEN.startsWith('?') ? SAS_TOKEN : `?${SAS_TOKEN}`;
+                const blobUrl = `https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${CONTAINER_NAME}/${fileName}${cleanSas}`;
 
                 try {
                     const response = await fetch(blobUrl, {
@@ -61,10 +60,10 @@ $htmlContent = @"
                     });
 
                     if (response.ok || response.status === 201) {
-                        showStatus("✅ <strong>Η αναφορά στάλθηκε!</strong><br>GPS: " + lat.toFixed(5) + ", " + lon.toFixed(5), "success");
+                        showStatus(`✅ <strong>Η αναφορά στάλθηκε!</strong><br>GPS: ${lat.toFixed(5)}, ${lon.toFixed(5)}`, "success");
                         fileInput.value = "";
                     } else {
-                        showStatus("❌ Σφάλμα Azure (" + response.status + "): " + response.statusText, "error");
+                        showStatus(`❌ Σφάλμα Azure (${response.status}): ${response.statusText}`, "error");
                     }
                 } catch (err) {
                     showStatus("❌ Σφάλμα δικτύου ή CORS.", "error");
@@ -82,7 +81,3 @@ $htmlContent = @"
     </script>
 </body>
 </html>
-"@
-
-# Αποθήκευση του αρχείου τοπικά
-Set-Content -Path ".\index.html" -Value $htmlContent
