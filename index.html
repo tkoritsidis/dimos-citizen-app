@@ -8,31 +8,47 @@
         body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; background-color: #f4f4f9; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         h2 { color: #0078d4; margin-top: 0; }
+        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; }
+        select, input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         button { background-color: #0078d4; color: white; padding: 12px; border: none; width: 100%; border-radius: 5px; font-size: 16px; margin-top: 20px; cursor: pointer; }
         #status { margin-top: 15px; font-weight: bold; padding: 10px; border-radius: 4px; word-break: break-all; }
         .success { background-color: #d4edda; color: #155724; }
         .error { background-color: #f8d7da; color: #721c24; }
         .info { background-color: #cce5ff; color: #004085; }
+        #mapLink { display: inline-block; margin-top: 10px; color: #0078d4; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>📢 Αναφορά Προβλήματος Δήμου</h2>
-        <p>Βγάλτε φωτογραφία το πρόβλημα και στείλτε το στον Δήμο.</p>
+        <p>Επιλέξτε Δήμο, βγάλτε φωτογραφία το πρόβλημα και στείλτε το.</p>
+        
+        <label for="citySelect">Επιλέξτε Δήμο/Πόλη:</label>
+        <select id="citySelect">
+            <option value="athens">Δήμος Αθηναίων</option>
+            <option value="thessaloniki">Δήμος Θεσσαλονίκης</option>
+            <option value="patra">Δήμος Πατρέων</option>
+            <option value="patra">Δήμος Καλλιθέας</option>
+            <option value="patra">Δήμος Νέαες Σμύρνης</option>
+        </select>
+
+        <label for="photoInput">Φωτογραφία:</label>
         <input type="file" id="photoInput" accept="image/*" capture="environment">
+        
         <button onclick="uploadReport()">Αποστολή Αναφοράς</button>
         <div id="status"></div>
     </div>
 
     <script>
-        // ------------------------------------------------------------------
-        const STORAGE_ACCOUNT_NAME = "stdimosreports"; 
-        const CONTAINER_NAME = "photos";               
-        const SAS_TOKEN = "sv=2025-07-05&ss=b&srt=sco&se=2027-08-17T21%3A03%3A51Z&sp=rwdl&sig=rfdyGxGirNsPYFTHrx4AghhJYevlQIi%2B%2FLiyqssNhWY%3D"; // Το token από το Βήμα 1 (με το ?)
-        // ------------------------------------------------------------------
+        // ⚙️ ΣΤΟΙΧΕΙΑ ΣΥΝΔΕΣΗΣ
+        const STORAGE_ACCOUNT_NAME = "stdimosreports";
+        const CONTAINER_NAME = "photos";
+        const SAS_TOKEN = "sv=2025-07-05&ss=b&srt=sco&se=2027-08-17T21%3A03%3A51Z&sp=rwdl&sig=rfdyGxGirNsPYFTHrx4AghhJYevlQIi%2B%2FLiyqssNhWY%3D"; // Το SAS token σας
 
         async function uploadReport() {
             const fileInput = document.getElementById('photoInput');
+            const city = document.getElementById('citySelect').value;
+
             if (fileInput.files.length === 0) {
                 showStatus("Παρακαλώ επιλέξτε μια φωτογραφία.", "error");
                 return;
@@ -46,7 +62,8 @@
                 showStatus("📤 Ανέβασμα φωτογραφίας...", "info");
 
                 const file = fileInput.files[0];
-                const fileName = `report_${Date.now()}_coords_${lat},${lon}.jpg`;
+                // Το όνομα περιέχει πλέον την πόλη: π.χ. athens_report_1718000_coords_37.98,23.72.jpg
+                const fileName = `${city}_report_${Date.now()}_coords_${lat},${lon}.jpg`;
                 
                 const cleanSas = SAS_TOKEN.startsWith('?') ? SAS_TOKEN : `?${SAS_TOKEN}`;
                 const blobUrl = `https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${CONTAINER_NAME}/${fileName}${cleanSas}`;
@@ -62,7 +79,8 @@
                     });
 
                     if (response.ok || response.status === 201) {
-                        showStatus(`✅ <strong>Η αναφορά στάλθηκε!</strong><br>GPS: ${lat.toFixed(5)}, ${lon.toFixed(5)}`, "success");
+                        const googleMapsUrl = `https://www.google.com/maps?q=${lat},${lon}`;
+                        showStatus(`✅ <strong>Η αναφορά στάλθηκε!</strong><br>GPS: ${lat.toFixed(5)}, ${lon.toFixed(5)}<br><a id="mapLink" href="${googleMapsUrl}" target="_blank">🗺️ Προβολή στο Google Maps</a>`, "success");
                         fileInput.value = "";
                     } else {
                         showStatus(`❌ Σφάλμα Azure (${response.status}): ${response.statusText}`, "error");
