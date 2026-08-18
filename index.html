@@ -9,7 +9,7 @@
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         h2 { color: #0078d4; margin-top: 0; }
         label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; }
-        select, input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        select, input[type="file"], input[type="email"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         button { background-color: #0078d4; color: white; padding: 12px; border: none; width: 100%; border-radius: 5px; font-size: 16px; margin-top: 20px; cursor: pointer; }
         #status { margin-top: 15px; font-weight: bold; padding: 10px; border-radius: 4px; word-break: break-all; }
         .success { background-color: #d4edda; color: #155724; }
@@ -21,21 +21,19 @@
 <body>
     <div class="card">
         <h2>📢 Αναφορά Προβλήματος Δήμου</h2>
-        <p>Επιλέξτε Δήμο, βγάλτε φωτογραφία το πρόβλημα και στείλτε το.</p>
+        <p>Συμπληρώστε τα στοιχεία σας, βγάλτε φωτογραφία και στείλτε την αναφορά.</p>
         
         <label for="citySelect">Επιλέξτε Δήμο/Πόλη:</label>
         <select id="citySelect">
+            <option value="kallithea">Δήμος Καλλιθέας</option>
             <option value="athens">Δήμος Αθηναίων</option>
             <option value="thessaloniki">Δήμος Θεσσαλονίκης</option>
-            <option value="patra">Δήμος Πατρέων</option>
-            <option value="kallithea">Δήμος Καλλιθέας</option>
-            <option value="neasmirni">Δήμος Νέαες Σμύρνης</option>
         </select>
 
         <label for="userEmail">Το Email σας (για ενημέρωση):</label>
         <input type="email" id="userEmail" placeholder="e.g. citizen@example.com" required>
-        
-        <label for="photoInput">Φωτογραφία:</label>
+
+        <label for="photoInput">Φωτογραφία Προβλήματος:</label>
         <input type="file" id="photoInput" accept="image/*" capture="environment">
         
         <button onclick="uploadReport()">Αποστολή Αναφοράς</button>
@@ -43,7 +41,6 @@
     </div>
 
     <script>
-        // ⚙️ ΣΤΟΙΧΕΙΑ ΣΥΝΔΕΣΗΣ
         const STORAGE_ACCOUNT_NAME = "stdimosreports";
         const CONTAINER_NAME = "photos";
         const SAS_TOKEN = "sv=2025-07-05&ss=b&srt=sco&se=2027-08-17T21%3A03%3A51Z&sp=rwdl&sig=rfdyGxGirNsPYFTHrx4AghhJYevlQIi%2B%2FLiyqssNhWY%3D"; // Το SAS token σας
@@ -71,8 +68,8 @@
                 showStatus("📤 Ανέβασμα φωτογραφίας...", "info");
 
                 const file = fileInput.files[0];
-                // Το όνομα περιέχει πλέον την πόλη: π.χ. athens_report_1718000_coords_37.98,23.72.jpg
-                const fileName = `${city}_report_${Date.now()}_coords_${lat},${lon}.jpg`;
+                // Η δομή ονόματος περιέχει πλέον και το email: kallithea_email_citizen@example.com_report_...jpg
+                const fileName = `${city}_email_${email}_report_${Date.now()}_coords_${lat},${lon}.jpg`;
                 
                 const cleanSas = SAS_TOKEN.startsWith('?') ? SAS_TOKEN : `?${SAS_TOKEN}`;
                 const blobUrl = `https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${CONTAINER_NAME}/${fileName}${cleanSas}`;
