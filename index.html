@@ -46,7 +46,7 @@
                 showStatus("📤 Ανέβασμα φωτογραφίας...", "info");
 
                 const file = fileInput.files[0];
-                const fileName = `report_${Date.now()}_lat${lat}_lon${lon}.jpg`;
+                const fileName = `report_${Date.now()}_coords_${lat},${lon}.jpg`;
                 
                 const cleanSas = SAS_TOKEN.startsWith('?') ? SAS_TOKEN : `?${SAS_TOKEN}`;
                 const blobUrl = `https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${CONTAINER_NAME}/${fileName}${cleanSas}`;
