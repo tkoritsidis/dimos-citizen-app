@@ -32,6 +32,9 @@
             <option value="neasmirni">Δήμος Νέαες Σμύρνης</option>
         </select>
 
+        <label for="userEmail">Το Email σας (για ενημέρωση):</label>
+        <input type="email" id="userEmail" placeholder="e.g. citizen@example.com" required>
+        
         <label for="photoInput">Φωτογραφία:</label>
         <input type="file" id="photoInput" accept="image/*" capture="environment">
         
@@ -48,6 +51,12 @@
         async function uploadReport() {
             const fileInput = document.getElementById('photoInput');
             const city = document.getElementById('citySelect').value;
+            const email = document.getElementById('userEmail').value.trim();
+
+            if (!email || !email.includes('@')) {
+                showStatus("Παρακαλώ εισάγετε ένα έγκυρο Email.", "error");
+                return;
+            }
 
             if (fileInput.files.length === 0) {
                 showStatus("Παρακαλώ επιλέξτε μια φωτογραφία.", "error");
